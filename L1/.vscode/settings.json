@@ -1,0 +1,19 @@
+{
+    "files.associations": {
+        "stdio.h": "c",
+        "stdbool.h": "c",
+        "pcb.h": "c",
+        "cpu.h": "c",
+        "make.rule": "makefile",
+        "cmath": "c",
+        "compare": "c",
+        "concepts": "c",
+        "type_traits": "c",
+        "limits": "c",
+        "*.tcc": "c",
+        "typeinfo": "c"
+    },
+    "C_Cpp.intelliSenseEngine":"default",
+    "editor.suggest.snippetsPreventQuickSuggestions":true,
+    "C_Cpp.errorSquiggles": "enabled"
+}

@@ -1,0 +1,93 @@
+.PHONY: all clean gdb
+
+MKDIR = mkdir
+RM = rm
+RMFLAGS = -rf
+
+CC = gcc
+CXX = g++
+CFLAG = -Wall
+
+AR = ar# 生成静态库的命令
+ARFLAGS = crs
+DIR_OBJS = objs
+DIR_EXES = $(L1PATH)/build/exes# 可执行文件目录
+DIR_DEPS = deps# 依赖关系文件目录
+DIR_LIBS = $(L1PATH)/build/libs# 生成的静态库目录
+DIRS = $(DIR_DEPS) $(DIR_OBJS) $(DIR_EXES) $(DIR_LIBS)# 所有的文件夹
+RMS = $(DIR_OBJS) $(DIR_DEPS)# 所有要删除的文件及文件夹
+
+# EXE = # 该目录文件不需要生成可执行文件，因为是功能模块 只用生成静态库
+ifneq ($(EXE), "")
+EXE := $(addprefix $(DIR_EXES)/, $(EXE))
+RMS += $(EXE)
+endif
+
+# LIB=libfoo.a# 静态库名
+ifneq ($(LIB), "") 
+LIB := $(addprefix $(DIR_LIBS)/, $(LIB))
+RMS += $(LIB)# clean时只用删除静态库文件 而不是删除整个文件夹，因为文件夹是我们自己手动创建的
+endif
+
+SRCS = $(wildcard *.c)# 得到所有的c和c++文件
+OBJS = $(SRCS:.c=.o)# 
+#OBJS := $(OBJS:.c=.o)
+OBJS := $(addprefix $(DIR_OBJS)/, $(OBJS))# 所有要生成的.o文件
+DEPS = $(SRCS:.c=.dep)#
+#DEPS := $(OBJS:.c=.o)
+DEPS := $(addprefix $(DIR_DEPS)/, $(DEPS))# 所有要生存的依赖关系文件
+
+# 要么生成exe文件 要么生存lib静态库
+ifneq ($(EXE), "")
+all: $(EXE)
+gdb: $(EXE)
+endif
+
+ifneq ($(LIB), "")
+all: $(LIB)
+gdb: $(LIB)
+endif
+
+ifneq ($(MAKECMDGOALS), clean)
+include $(DEPS) # 这里会包含所有的依赖文件 若不存在则触发目标去创建
+endif
+
+ifeq ($(MAKECMDGOALS), gdb)
+CFLAG := $(CFLAG) -g
+endif
+
+# gcc -I  头文件路径
+ifneq ($(INC_DIRS), "")
+INC_DIRS := $(strip $(INC_DIRS))
+INC_DIRS := $(addprefix -I, $(INC_DIRS))
+endif
+
+# gcc -l 静态库路径
+ifneq ($(LINK_LIBS), "")
+LINK_LIBS := $(strip $(LINK_LIBS))
+LINK_LIBS_DEP := $(addprefix $(DIR_LIBS)/lib, $(LINK_LIBS))
+LINK_LIBS := $(addprefix -l, $(LINK_LIBS))
+# 生存可执行文件时的依赖
+LINK_LIBS_DEP := $(LINK_LIBS_DEP:=.a)
+endif
+
+
+$(DIRS):
+	$(MKDIR) $@
+$(EXE): $(DIR_EXES) $(OBJS) $(LINK_LIBS_DEP)   # 生成exe执行文件依赖exes文件夹和.o文件
+	$(CC) $(CFLAG) -o $@ $(filter %.o, $^) -L $(DIR_LIBS) $(LINK_LIBS)
+$(LIB): $(DIR_LIBS) $(OBJS)   # 生成lib静态库依赖libs文件夹和.o文件
+	$(AR) $(ARFLAGS) $@ $(filter %.o, $^)
+$(DIR_OBJS)/%.o: $(DIR_OBJS) %.c # 生成.o文件依赖objs目录和.c文件
+	$(CC) $(CFLAG) $(INC_DIRS) -o $@ -c $(filter %.c, $^)
+$(DIR_DEPS)/%.dep: $(DIR_DEPS) %.c
+	@set -e ; \
+	echo "Making $@ ..." ; \
+	$(RM) $(RMFLAGS) $@.tmp ; \
+	$(CC) $(INC_DIRS) -E -MM $(filter %.c, $^) > $@.tmp ; \
+	sed 's,\(.*\)\.o[:]*,objs/\1.o $@: ,g' < $@.tmp > $@ ; \
+	$(RM) $(RMFLAGS) $@.tmp
+
+
+clean:
+	$(RM) $(RMFLAGS) $(RMS)

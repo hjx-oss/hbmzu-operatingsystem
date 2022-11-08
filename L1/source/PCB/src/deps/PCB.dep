@@ -1,0 +1,2 @@
+objs/PCB.o deps/PCB.dep:  PCB.c \
+ /home/huang/Desktop/share/hbmzOperSystem/L1/source/PCB/inc/PCB.h

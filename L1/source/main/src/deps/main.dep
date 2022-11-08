@@ -1,0 +1,3 @@
+objs/main.o deps/main.dep:  main.c \
+ /home/huang/Desktop/share/hbmzOperSystem/L1/source/cpu/inc/cpu.h \
+ /home/huang/Desktop/share/hbmzOperSystem/L1/source/PCB/inc/PCB.h
